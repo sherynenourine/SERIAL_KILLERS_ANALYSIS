@@ -185,6 +185,71 @@ header[data-testid="stHeader"] { background: transparent; }
 </style>
 """, unsafe_allow_html=True)
 
+# =======================================================
+#  COUCHE D'IMMERSION (overlay cinéma + overrides esthétiques)
+#  S'empile par-dessus le design existant sans toucher aux graphes.
+# =======================================================
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Special+Elite&display=swap');
+
+/* overlay cinéma : grain animé + lignes de balayage + vignette */
+.fx-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 9998;
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.05) 0 1px, transparent 1px 3px),
+    radial-gradient(130% 130% at 50% 35%, transparent 52%, rgba(0,0,0,0.55) 100%); }
+.fx-overlay::before { content:""; position:absolute; inset:-50%;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='160'%20height='160'%3E%3Cfilter%20id='n'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.85'%20numOctaves='2'%20stitchTiles='stitch'/%3E%3C/filter%3E%3Crect%20width='100%25'%20height='100%25'%20filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: .045; animation: grain 5s steps(5) infinite; }
+@keyframes grain { 0%{transform:translate(0,0)} 20%{transform:translate(-4%,3%)}
+  40%{transform:translate(3%,-3%)} 60%{transform:translate(-2%,2%)}
+  80%{transform:translate(2%,-1%)} 100%{transform:translate(0,0)} }
+
+/* police "rapport tapé" pour les libellés d'enquête */
+.section-head .eyebrow, .hero .eyebrow, .metric-idx, .verdict .stamp, .stamp-rot, .hero-meta {
+  font-family: 'Special Elite','JetBrains Mono',monospace !important; }
+
+/* hero renforcé : halo, léger flicker, tampon + ligne de méta */
+.hero { box-shadow: 0 30px 90px rgba(0,0,0,.7), inset 0 0 120px rgba(139,0,0,.14); }
+.hero h1 { text-shadow: 0 0 28px rgba(176,0,32,.45), 0 2px 0 rgba(0,0,0,.5);
+  animation: flicker 7s infinite; }
+@keyframes flicker { 0%,90%,100%{opacity:1} 93%{opacity:.78} 94%{opacity:1}
+  96%{opacity:.86} 97%{opacity:1} }
+.stamp-rot { position:absolute; top:42px; right:64px; z-index:3; transform:rotate(-11deg);
+  color: rgba(255,59,59,.55); border:3px double rgba(255,59,59,.5); border-radius:8px;
+  padding:6px 16px; font-size:21px; letter-spacing:.16em; text-transform:uppercase;
+  font-weight:700; opacity:.85; }
+.hero-meta { margin-top:22px; font-size:12px; letter-spacing:.18em; text-transform:uppercase;
+  color: var(--muted); border-top:1px solid var(--hair); padding-top:14px; display:inline-block; }
+
+/* en-têtes de section : onglet de dossier */
+.section-head .eyebrow { background: rgba(20,18,18,.9); border:1px solid var(--hair);
+  border-left:3px solid var(--ember); border-radius:6px 6px 0 0; padding:7px 14px; }
+
+/* KPI : faux scellé code-barres */
+.metric-card::after { content:"▮▯▮▮▯▮▯▯▮▮▯▮"; position:absolute; bottom:8px; right:12px;
+  font-size:9px; letter-spacing:-1px; color: rgba(236,231,223,.16); font-family:monospace; }
+
+/* verdict : tampon "affaire classée" */
+.verdict { overflow:hidden; }
+.verdict::after { content:"Affaire classée"; position:absolute; top:22px; right:24px;
+  transform:rotate(8deg); color: rgba(255,59,59,.5); border:3px double rgba(255,59,59,.45);
+  border-radius:8px; padding:6px 14px; font-family:'Special Elite',monospace;
+  text-transform:uppercase; letter-spacing:.12em; font-size:15px; font-weight:700; }
+
+/* sélection + barre de défilement */
+::selection { background: rgba(176,0,32,.55); color:#fff; }
+::-webkit-scrollbar { width:11px; }
+::-webkit-scrollbar-track { background:#0a0908; }
+::-webkit-scrollbar-thumb { background: linear-gradient(#5a0000,#2a0000); border-radius:6px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hero h1 { animation:none; } .fx-overlay::before { animation:none; } }
+</style>
+<div class="fx-overlay"></div>
+""", unsafe_allow_html=True)
+
+
 # Empreinte digitale SVG (décor du hero) — une seule ligne pour éviter
 # qu'un retour à la ligne ne casse le bloc HTML interprété par Streamlit.
 FINGERPRINT = (
@@ -269,9 +334,11 @@ def section(num, eyebrow, title):
 st.markdown(f"""
 <div class="hero">
 {FINGERPRINT}
-<div class="eyebrow">Dossier · True Crime · Data &amp; NLP</div>
+<div class="stamp-rot">Confidentiel</div>
+<div class="eyebrow">⦿ Dossier N° SK-757 · Accès restreint · True Crime / NLP</div>
 <h1>Serial<br>Killers<span class="thin">Une enquête par les données</span></h1>
 <p>757 dossiers criminels documentés, passés au crible : évolution historique, géographie de la peur, modes opératoires extraits par text-mining, et une dernière question — <b>pourquoi&nbsp;?</b></p>
+<div class="hero-meta">Ouvert le 17.06.2026 · 757 sujets · 10 sources croisées · NLP</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -510,11 +577,11 @@ st.markdown('<div class="section-head"><div class="eyebrow">'
 st.markdown("""
 <div class="verdict">
 <span class="stamp">⎯ Verdict de l'enquête ⎯</span>
-Le phénomène se concentre fortement sur certaines périodes, surtout la seconde moitié du
-XX<sup>e</sup> siècle et sur quelques pays sur-représentés dans les sources. Le text-mining
+Le phénomène se concentre fortement sur certaines périodes — surtout la seconde moitié du
+XX<sup>e</sup> siècle — et sur quelques pays sur-représentés dans les sources. Le text-mining
 révèle des schémas récurrents dans les méthodes et les catégories de victimes. Enfin, là où nos
 données s'arrêtent au « comment », une source externe éclaire le « pourquoi » : une enfance
-marquée par la maltraitance est nettement sur-représentée, un facteur de risque, jamais une
+marquée par la maltraitance est nettement sur-représentée — un facteur de risque, jamais une
 fatalité.
 <br><br>
 Ce site complète le notebook Colab et le dashboard Power BI en offrant une lecture continue,
