@@ -2,6 +2,9 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import streamlit.components.v1 as components
+import json
+import urllib.request
+import urllib.parse
 
 st.set_page_config(
     page_title="Serial Killers — Data Investigation",
@@ -249,6 +252,16 @@ st.markdown("""
   border:1px solid var(--hair); border-left:5px solid var(--blood); border-radius:14px;
   padding:24px 26px; margin-top:14px; box-shadow:0 20px 50px rgba(0,0,0,.5);
   animation: rise .4s ease both; }
+.dossier-top { display:flex; gap:22px; align-items:flex-start; flex-wrap:wrap; }
+.dossier-main { flex:1; min-width:260px; }
+.mug { width:150px; flex-shrink:0; border-radius:10px; overflow:hidden;
+  border:1px solid rgba(255,59,59,.30); background:#100d0c;
+  box-shadow:0 10px 26px rgba(0,0,0,.5); position:relative; }
+.mug::after { content:"PIÈCE N°1"; position:absolute; bottom:0; left:0; right:0;
+  text-align:center; font-family:'Special Elite',monospace; font-size:9px; letter-spacing:.12em;
+  color:#cfcac2; background:rgba(0,0,0,.6); padding:3px 0; }
+.mug img, .mug svg { display:block; width:150px; height:180px; object-fit:cover;
+  filter:grayscale(100%) contrast(1.06) brightness(.96); }
 .dossier-head { display:flex; justify-content:space-between; align-items:baseline;
   flex-wrap:wrap; gap:8px; border-bottom:1px dashed var(--hair);
   padding-bottom:14px; margin-bottom:16px; }
@@ -399,6 +412,30 @@ def decade_race(country_series, start_series, proven_series, top_n=10):
     grp["CumKillers"] = grp.groupby("Country")["Killers"].cumsum()
     grp["CumVictims"] = grp.groupby("Country")["Victims"].cumsum()
     return grp
+
+@st.cache_data(show_spinner=False, ttl=86400)
+def get_mugshot(name):
+    """Récupère une vignette photo via l'API Wikipédia. None si introuvable."""
+    q = name.split(",")[0].split(" and ")[0].split(" et ")[0].strip()
+    url = "https://en.wikipedia.org/api/rest_v1/page/summary/" + urllib.parse.quote(q)
+    try:
+        req = urllib.request.Request(
+            url, headers={"User-Agent": "SerialKillersDataViz/1.0 (projet etudiant)"})
+        with urllib.request.urlopen(req, timeout=4) as r:
+            payload = json.loads(r.read().decode("utf-8"))
+        return payload.get("thumbnail", {}).get("source")
+    except Exception:
+        return None
+
+# Silhouette de secours quand aucune photo n'est trouvée
+MUG_PLACEHOLDER = (
+    '<svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">'
+    '<rect width="100" height="120" fill="#100d0c"/>'
+    '<circle cx="50" cy="44" r="20" fill="none" stroke="#5a4a48" stroke-width="3"/>'
+    '<path d="M20 108 C20 82 80 82 80 108" fill="none" stroke="#5a4a48" stroke-width="3"/>'
+    '<text x="50" y="118" text-anchor="middle" fill="#5a4a48" '
+    'font-family="monospace" font-size="7">SANS PHOTO</text></svg>'
+)
 
 
 # =======================================================
@@ -758,8 +795,14 @@ if choice != "— Sélectionner un dossier —" and names:
     notes = str(notes).replace("<", "&lt;").replace(">", "&gt;")
     case_id = f"SK-{int(row.name):04d}"
 
+    photo = get_mugshot(choice)
+    mug = f'<img src="{photo}" alt="">' if photo else MUG_PLACEHOLDER
+
     st.markdown(f"""
 <div class="dossier">
+<div class="dossier-top">
+<div class="mug">{mug}</div>
+<div class="dossier-main">
 <div class="dossier-head">
 <div class="dossier-name">{choice}</div>
 <div class="dossier-id">Dossier N° {case_id} · Classé</div>
@@ -770,6 +813,8 @@ if choice != "— Sélectionner un dossier —" and names:
 <div class="fld"><span class="k">Durée</span><span class="v">{dur}</span></div>
 <div class="fld"><span class="k">Victimes confirmées</span><span class="v vred">{_int(row['Proven victims'])}</span></div>
 <div class="fld"><span class="k">Victimes potentielles</span><span class="v">{_int(row['Possible victims'])}</span></div>
+</div>
+</div>
 </div>
 <div class="dossier-notes"><span class="k">Notes d'enquête</span>{notes}</div>
 </div>
