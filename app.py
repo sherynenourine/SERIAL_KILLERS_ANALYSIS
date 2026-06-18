@@ -653,21 +653,18 @@ with cc2:
     st.plotly_chart(fov, use_container_width=True)
 
 st.markdown("""
-<div class="case-card">
-<b>Lecture.</b> À gauche, <b>nos 757 dossiers</b> : la durée d'activité moyenne s'effondre — d'environ
-<b>9-10 ans</b> dans les années 1970 à <b>3,6 ans</b> dans les années 2010. Les tueurs sont arrêtés de plus
-en plus tôt : c'est la <b>signature mesurable</b> des progrès de l'enquête (ADN dès la fin des années 1980,
-vidéosurveillance, téléphone). À droite, le pic des tueurs (années 1980-90) <b>précède</b> l'explosion du
-téléphone portable, qui rend les enlèvements plus risqués et raréfie les proies.
+<div class="case-card" style="border-left:4px solid #B00020;">
+<div style="font-family:'Special Elite',monospace; color:#ff3b3b; letter-spacing:.14em; text-transform:uppercase; font-size:13px; margin-bottom:10px;">Conclusion — ce que les données disent du pic</div>
+
+<b>1. La montée et le sommet (données).</b> Le nombre de tueurs grimpe de <b>56</b> (années 1960) à <b>116</b> (1970) puis culmine à <b>155</b> dans les années 1980. Pendant cet « âge d'or », les tueurs restaient actifs <b>longtemps</b> — jusqu'à <b>~9-10 ans</b> en moyenne avant d'être arrêtés. Cette <b>fenêtre d'impunité</b> est le moteur du pic.
 <br><br>
-<b>Nuances.</b> Corrélation n'est pas causalité — d'autres facteurs jouent (baisse générale de la violence,
-forte hausse de l'incarcération dans les années 1980-90). Et une part du recul récent est un <b>artefact</b>
-qui prolonge notre biais de documentation : nos données ne contiennent que des affaires <b>résolues</b>
-(le Golden State Killer identifié en 2018, Gilgo Beach en 2023), donc les dernières décennies sont
-<b>sous-comptées</b>.
+<b>2. Le déclin (directement mesurable).</b> La durée d'activité moyenne s'effondre à <b>3,6 ans</b> dans les années 2010 : les tueurs sont neutralisés bien plus vite. C'est la <b>signature, dans nos propres données</b>, des progrès de l'enquête (ADN, vidéosurveillance, téléphone) — que l'overlay avec l'adoption du mobile illustre.
 <br><br>
-<span class="src">Sources : J. A. Fox (Northeastern University) ; M. Aamodt (Radford/FGCU) ;
-adoption du mobile : ITU / Banque mondiale (États-Unis).</span>
+<b>3. Ce qu'on ne sur-interprète pas.</b> Corrélation n'est pas causalité ; les causes <i>profondes</i> de la montée (mobilité, anonymat des victimes, contagion médiatique) ne sont <b>pas</b> dans notre dataset — on les tire de la littérature. Et une part du creux récent est un <b>artefact</b> : nos données ne contiennent que des affaires <b>résolues</b> (Golden State Killer identifié en 2018, Gilgo Beach en 2023), donc les dernières décennies sont <b>sous-comptées</b>.
+<br><br>
+Le « pic » n'est donc pas qu'un nombre : c'est l'empreinte d'une <b>époque où l'on tuait longtemps avant d'être pris</b> — une fenêtre que la technologie a refermée.
+<br><br>
+<span class="src">Sources : J. A. Fox (Northeastern University) ; M. Aamodt (Radford/FGCU) ; adoption du mobile : ITU / Banque mondiale (États-Unis).</span>
 </div>
 """, unsafe_allow_html=True)
 
