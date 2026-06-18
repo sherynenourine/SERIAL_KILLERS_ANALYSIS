@@ -327,6 +327,30 @@ def section(num, eyebrow, title):
         unsafe_allow_html=True,
     )
 
+# Normalisation des pays pour la cartographie :
+# on retient le pays principal (1er listé) et on convertit les États
+# historiques en équivalents modernes reconnus par Plotly.
+_HIST = {
+    "West Germany": "Germany", "East Germany": "Germany", "German Empire": "Germany",
+    "Allied-occupied Germany": "Germany", "Soviet Union": "Russia",
+    "Czechoslovakia": "Czech Republic", "Austria-Hungary": "Austria",
+    "Ottoman Empire": "Turkey", "Imperial State of Iran": "Iran",
+    "Kingdom of Yugoslavia": "Serbia", "Republic of Macedonia": "North Macedonia",
+    "SR Croatia": "Croatia", "SR Slovenia": "Slovenia", "Kingdom of Romania": "Romania",
+    "Belgian Congo": "Democratic Republic of the Congo", "Portuguese Angola": "Angola",
+    "Swaziland": "Eswatini",
+}
+
+@st.cache_data(show_spinner=False)
+def geo_counts(country_series):
+    def norm(c):
+        if pd.isna(c):
+            return None
+        first = str(c).split(",")[0].strip()
+        return _HIST.get(first, first)
+    s = country_series.map(norm).dropna().value_counts()
+    return s.rename_axis("Country").reset_index(name="Killers")
+
 
 # =======================================================
 #  HERO
@@ -413,8 +437,28 @@ if data["decade"] is not None:
 #  04 · GEOGRAPHIE
 # =======================================================
 section("04", "Où", "La géographie de la peur")
-if data["country"] is not None:
-    top_country = data["country"].sort_values("Killers", ascending=False).head(15)
+geo = geo_counts(df["Country"])
+if not geo.empty:
+    # --- Carte mondiale (choropleth) ---
+    fig_map = px.choropleth(
+        geo, locations="Country", locationmode="country names",
+        color="Killers", color_continuous_scale=["#2a0000", "#8B0000", "#ff3b3b"],
+        title="Répartition mondiale des dossiers documentés")
+    fig_map.update_geos(
+        bgcolor="rgba(0,0,0,0)", showframe=False, showcoastlines=False,
+        showland=True, landcolor="#15110f",
+        showocean=True, oceancolor="#0a0807",
+        showcountries=True, countrycolor="rgba(236,231,223,0.10)",
+        projection_type="natural earth", lataxis_range=[-56, 82])
+    fig_map = style_fig(fig_map, 21)
+    fig_map.update_layout(
+        height=470, margin=dict(t=58, l=0, r=0, b=0),
+        coloraxis_colorbar=dict(title="", thickness=10, len=0.55,
+                                tickfont=dict(color="#cfcac2")))
+    st.plotly_chart(fig_map, use_container_width=True)
+
+    # --- Top pays (barres) ---
+    top_country = geo.sort_values("Killers", ascending=False).head(15)
     f = px.bar(top_country, x="Killers", y="Country", orientation="h",
                title="Pays les plus représentés", color="Killers",
                color_continuous_scale=["#3a0000", "#8B0000", "#ff3b3b"])
@@ -422,7 +466,7 @@ if data["country"] is not None:
     st.plotly_chart(style_fig(f), use_container_width=True)
     st.markdown("""
 <div class="case-card src">
-À lire avec prudence : cette carte reflète la <b>documentation</b> (sources anglophones, archives en ligne), pas la prévalence réelle pays par pays.
+À lire avec prudence : cette carte reflète la <b>documentation</b> (sources anglophones, archives en ligne), pas la prévalence réelle pays par pays. Les pays sont normalisés (État historique → équivalent moderne, pays principal retenu).
 </div>
 """, unsafe_allow_html=True)
 
