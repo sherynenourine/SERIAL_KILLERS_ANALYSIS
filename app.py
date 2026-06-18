@@ -366,15 +366,38 @@ _HIST = {
     "Swaziland": "Eswatini",
 }
 
+def norm_country(c):
+    if pd.isna(c):
+        return None
+    first = str(c).split(",")[0].strip()
+    return _HIST.get(first, first)
+
 @st.cache_data(show_spinner=False)
 def geo_counts(country_series):
-    def norm(c):
-        if pd.isna(c):
-            return None
-        first = str(c).split(",")[0].strip()
-        return _HIST.get(first, first)
-    s = country_series.map(norm).dropna().value_counts()
+    s = country_series.map(norm_country).dropna().value_counts()
     return s.rename_axis("Country").reset_index(name="Killers")
+
+@st.cache_data(show_spinner=False)
+def decade_race(country_series, start_series, proven_series, top_n=10):
+    d = pd.DataFrame({
+        "Country": country_series.map(norm_country),
+        "Decade": (start_series // 10 * 10),
+        "Proven": proven_series,
+    }).dropna(subset=["Country", "Decade"])
+    d["Decade"] = d["Decade"].astype(int)
+    d = d[(d["Decade"] >= 1850) & (d["Decade"] <= 2020)]
+    top = d["Country"].value_counts().head(top_n).index.tolist()
+    d = d[d["Country"].isin(top)]
+    decades = sorted(d["Decade"].unique())
+    grp = (d.groupby(["Decade", "Country"])
+             .agg(Killers=("Country", "size"), Victims=("Proven", "sum"))
+             .reset_index())
+    full = pd.MultiIndex.from_product([decades, top], names=["Decade", "Country"])
+    grp = grp.set_index(["Decade", "Country"]).reindex(full, fill_value=0).reset_index()
+    grp = grp.sort_values("Decade")
+    grp["CumKillers"] = grp.groupby("Country")["Killers"].cumsum()
+    grp["CumVictims"] = grp.groupby("Country")["Victims"].cumsum()
+    return grp
 
 
 # =======================================================
@@ -456,6 +479,22 @@ if data["decade"] is not None:
                    title="Victimes confirmées par décennie")
         f.update_traces(marker_color="#9aa0a8")
         st.plotly_chart(style_fig(f), use_container_width=True)
+
+# --- Frise animée : accumulation par pays, décennie par décennie ---
+grp = decade_race(df["Country"], df["Start year"], df["Proven victims"])
+if not grp.empty:
+    xmax, ymax = grp["CumKillers"].max(), grp["CumVictims"].max()
+    fig_race = px.scatter(
+        grp, x="CumKillers", y="CumVictims", size="CumKillers", color="Country",
+        animation_frame="Decade", hover_name="Country", size_max=50,
+        range_x=[-xmax * 0.03, xmax * 1.12], range_y=[-ymax * 0.04, ymax * 1.12],
+        title="Montée du phénomène, décennie par décennie (cumul par pays)",
+        labels={"CumKillers": "Tueurs cumulés", "CumVictims": "Victimes cumulées"},
+        color_discrete_sequence=px.colors.qualitative.Set3)
+    fig_race.update_traces(marker=dict(line=dict(width=0.6, color="rgba(0,0,0,0.45)"),
+                                       opacity=0.88))
+    st.plotly_chart(style_fig(fig_race, 20), use_container_width=True)
+    st.caption("▶ Appuie sur « lecture » pour voir les 10 pays les plus touchés s'accumuler décennie après décennie.")
 
 
 # =======================================================
