@@ -415,15 +415,22 @@ def decade_race(country_series, start_series, proven_series, top_n=10):
 
 @st.cache_data(show_spinner=False, ttl=86400)
 def get_mugshot(name):
-    """Récupère une vignette photo via l'API Wikipédia. None si introuvable."""
+    """Cherche la page Wikipédia la plus pertinente et renvoie sa vignette. None sinon."""
     q = name.split(",")[0].split(" and ")[0].split(" et ")[0].strip()
-    url = "https://en.wikipedia.org/api/rest_v1/page/summary/" + urllib.parse.quote(q)
+    api = ("https://en.wikipedia.org/w/api.php?action=query&format=json"
+           "&generator=search&gsrlimit=1&gsrnamespace=0"
+           "&gsrsearch=" + urllib.parse.quote(q) +
+           "&prop=pageimages&piprop=thumbnail&pithumbsize=400")
     try:
         req = urllib.request.Request(
-            url, headers={"User-Agent": "SerialKillersDataViz/1.0 (projet etudiant)"})
-        with urllib.request.urlopen(req, timeout=4) as r:
+            api, headers={"User-Agent": "SerialKillersDataViz/1.0 (projet etudiant)"})
+        with urllib.request.urlopen(req, timeout=5) as r:
             payload = json.loads(r.read().decode("utf-8"))
-        return payload.get("thumbnail", {}).get("source")
+        for page in payload.get("query", {}).get("pages", {}).values():
+            thumb = page.get("thumbnail", {}).get("source")
+            if thumb:
+                return thumb
+        return None
     except Exception:
         return None
 
