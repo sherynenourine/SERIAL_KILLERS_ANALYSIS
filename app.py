@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit.components.v1 as components
 import json
+import ssl
 import urllib.request
 import urllib.parse
 
@@ -413,24 +414,45 @@ def decade_race(country_series, start_series, proven_series, top_n=10):
     grp["CumVictims"] = grp.groupby("Country")["Victims"].cumsum()
     return grp
 
+_WIKI_UA = "SerialKillersDataViz/1.0 (projet etudiant; contact: student@example.com)"
+
+# Contexte SSL fiable (corrige CERTIFICATE_VERIFY_FAILED sur macOS / certains environnements)
+try:
+    import certifi
+    _SSL_CTX = ssl.create_default_context(cafile=certifi.where())
+except Exception:
+    _SSL_CTX = ssl.create_default_context()
+
+def _wiki_get(url):
+    req = urllib.request.Request(url, headers={"User-Agent": _WIKI_UA})
+    try:
+        with urllib.request.urlopen(req, timeout=6, context=_SSL_CTX) as r:
+            return json.loads(r.read().decode("utf-8"))
+    except ssl.SSLError:
+        # Repli : certificats locaux non configurés (fréquent sur macOS).
+        # Données publiques (images Wikipédia) -> repli acceptable.
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        with urllib.request.urlopen(req, timeout=6, context=ctx) as r:
+            return json.loads(r.read().decode("utf-8"))
+
 @st.cache_data(show_spinner=False, ttl=86400)
 def get_mugshot(name):
-    """Cherche la page Wikipédia la plus pertinente et renvoie sa vignette. None sinon."""
+    """1) recherche le bon article  2) récupère sa vignette. None si rien."""
     q = name.split(",")[0].split(" and ")[0].split(" et ")[0].strip()
-    api = ("https://en.wikipedia.org/w/api.php?action=query&format=json"
-           "&generator=search&gsrlimit=1&gsrnamespace=0"
-           "&gsrsearch=" + urllib.parse.quote(q) +
-           "&prop=pageimages&piprop=thumbnail&pithumbsize=400")
     try:
-        req = urllib.request.Request(
-            api, headers={"User-Agent": "SerialKillersDataViz/1.0 (projet etudiant)"})
-        with urllib.request.urlopen(req, timeout=5) as r:
-            payload = json.loads(r.read().decode("utf-8"))
-        for page in payload.get("query", {}).get("pages", {}).values():
-            thumb = page.get("thumbnail", {}).get("source")
-            if thumb:
-                return thumb
-        return None
+        # 1) recherche (gère orthographes / homonymes / redirections)
+        search = _wiki_get("https://en.wikipedia.org/w/rest.php/v1/search/page?limit=1&q="
+                           + urllib.parse.quote(q))
+        pages = search.get("pages", [])
+        if not pages:
+            return None
+        title = pages[0]["key"]
+        # 2) résumé de l'article -> vignette
+        summary = _wiki_get("https://en.wikipedia.org/api/rest_v1/page/summary/"
+                            + urllib.parse.quote(title))
+        return (summary.get("thumbnail") or {}).get("source")
     except Exception:
         return None
 
