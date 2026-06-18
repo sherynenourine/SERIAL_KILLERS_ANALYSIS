@@ -243,6 +243,31 @@ st.markdown("""
 ::-webkit-scrollbar-track { background:#0a0908; }
 ::-webkit-scrollbar-thumb { background: linear-gradient(#5a0000,#2a0000); border-radius:6px; }
 
+/* fiche dossier interactive (explorateur) */
+.dossier { background: linear-gradient(180deg, rgba(24,21,20,.95), rgba(12,10,9,.96));
+  border:1px solid var(--hair); border-left:5px solid var(--blood); border-radius:14px;
+  padding:24px 26px; margin-top:14px; box-shadow:0 20px 50px rgba(0,0,0,.5);
+  animation: rise .4s ease both; }
+.dossier-head { display:flex; justify-content:space-between; align-items:baseline;
+  flex-wrap:wrap; gap:8px; border-bottom:1px dashed var(--hair);
+  padding-bottom:14px; margin-bottom:16px; }
+.dossier-name { font-family:'Oswald',sans-serif; font-size:30px; font-weight:600; color:#fff;
+  text-transform:uppercase; letter-spacing:.5px; }
+.dossier-id { font-family:'Special Elite',monospace; font-size:13px; letter-spacing:.15em;
+  color: var(--ember); }
+.dossier-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:14px; margin-bottom:16px; }
+.fld { display:flex; flex-direction:column; gap:4px; background:rgba(0,0,0,.25);
+  border:1px solid var(--hair); border-radius:10px; padding:12px 14px; }
+.fld .k { font-family:'Special Elite',monospace; font-size:10.5px; letter-spacing:.12em;
+  text-transform:uppercase; color: var(--muted); }
+.fld .v { font-family:'JetBrains Mono',monospace; font-size:19px; color:#fff; }
+.fld .v.vred { color: var(--ember); }
+.dossier-notes { background:rgba(0,0,0,.25); border:1px solid var(--hair); border-radius:10px;
+  padding:14px 16px; font-size:15px; line-height:1.6; color: var(--text); }
+.dossier-notes .k { display:block; font-family:'Special Elite',monospace; font-size:10.5px;
+  letter-spacing:.12em; text-transform:uppercase; color: var(--muted); margin-bottom:8px; }
+
 @media (prefers-reduced-motion: reduce) {
   .hero h1 { animation:none; } .fx-overlay::before { animation:none; } }
 </style>
@@ -610,6 +635,42 @@ st.dataframe(
         "Notes": st.column_config.TextColumn("Notes", width="large"),
     },
 )
+
+# --- Fiche dossier interactive ---
+st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
+names = sorted(filtered["Name"].dropna().unique().tolist())
+choice = st.selectbox("Ouvrir un dossier", ["— Sélectionner un dossier —"] + names)
+
+if choice != "— Sélectionner un dossier —" and names:
+    row = filtered[filtered["Name"] == choice].iloc[0]
+
+    def _year(v): return str(int(v)) if pd.notna(v) else "—"
+    def _int(v):  return str(int(v)) if pd.notna(v) else "—"
+
+    sy, ey = row["Start year"], row["End year"]
+    period = f"{_year(sy)} – {_year(ey)}"
+    dur = f"{int(ey - sy)} an(s)" if (pd.notna(sy) and pd.notna(ey) and ey >= sy) else "—"
+    country = row["Country"] if pd.notna(row["Country"]) else "—"
+    notes = row["Notes"] if pd.notna(row["Notes"]) else "Aucune note disponible."
+    notes = str(notes).replace("<", "&lt;").replace(">", "&gt;")
+    case_id = f"SK-{int(row.name):04d}"
+
+    st.markdown(f"""
+<div class="dossier">
+<div class="dossier-head">
+<div class="dossier-name">{choice}</div>
+<div class="dossier-id">Dossier N° {case_id} · Classé</div>
+</div>
+<div class="dossier-grid">
+<div class="fld"><span class="k">Pays</span><span class="v">{country}</span></div>
+<div class="fld"><span class="k">Période active</span><span class="v">{period}</span></div>
+<div class="fld"><span class="k">Durée</span><span class="v">{dur}</span></div>
+<div class="fld"><span class="k">Victimes confirmées</span><span class="v vred">{_int(row['Proven victims'])}</span></div>
+<div class="fld"><span class="k">Victimes potentielles</span><span class="v">{_int(row['Possible victims'])}</span></div>
+</div>
+<div class="dossier-notes"><span class="k">Notes d'enquête</span>{notes}</div>
+</div>
+""", unsafe_allow_html=True)
 
 
 # =======================================================
