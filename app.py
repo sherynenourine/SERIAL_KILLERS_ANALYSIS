@@ -497,9 +497,35 @@ if not geo.empty:
 
 
 # =======================================================
-#  05 · METHODES (NLP)
+#  05 · PROFILS (intensité)
 # =======================================================
-section("05", "Comment", "Les modes opératoires")
+section("05", "Qui", "Profils extrêmes : l'intensité meurtrière")
+prof = df.copy()
+prof["Career"] = prof["End year"] - prof["Start year"]
+prof = prof[prof["Career"].notna() & (prof["Career"] >= 0) & prof["Proven victims"].notna()]
+prof["PerYear"] = (prof["Proven victims"] / prof["Career"].replace(0, 1)).round(1)
+if not prof.empty:
+    fig_sc = px.scatter(
+        prof, x="Career", y="Proven victims",
+        size="Proven victims", color="PerYear", hover_name="Name", size_max=34,
+        color_continuous_scale=["#6b6b6b", "#8B0000", "#ff3b3b"],
+        title="Durée d'activité vs victimes confirmées",
+        labels={"Career": "Années d'activité", "Proven victims": "Victimes confirmées",
+                "PerYear": "Victimes/an"})
+    fig_sc.update_traces(marker=dict(line=dict(width=0.5, color="rgba(0,0,0,0.4)"), opacity=0.85))
+    fig_sc.update_layout(coloraxis_colorbar=dict(title="Vict./an", thickness=10, len=0.6))
+    st.plotly_chart(style_fig(fig_sc, 20), use_container_width=True)
+    st.markdown("""
+<div class="case-card src">
+Chaque point est un tueur. À <b>droite</b>, des « carrières » étalées sur des décennies ; en <b>haut à gauche</b>, les profils les plus intenses — beaucoup de victimes en très peu de temps. La couleur (rouge vif) signale ce rythme meurtrier élevé. La taille est proportionnelle au nombre de victimes confirmées.
+</div>
+""", unsafe_allow_html=True)
+
+
+# =======================================================
+#  06 · METHODES (NLP)
+# =======================================================
+section("06", "Comment", "Les modes opératoires")
 n1, n2 = st.columns(2)
 with n1:
     if data["crime_profile"] is not None:
@@ -526,9 +552,9 @@ if data["word_freq"] is not None:
 
 
 # =======================================================
-#  06 · LE POURQUOI
+#  07 · LE POURQUOI
 # =======================================================
-section("06", "Pourquoi", "L'enfance derrière le crime")
+section("07", "Pourquoi", "L'enfance derrière le crime")
 aces, bio_cov = data["aces"], data["bio_cov"]
 
 st.markdown("""
@@ -602,9 +628,9 @@ in serial killers. Journal of Police and Criminal Psychology, 20(1), 40-47.</spa
 
 
 # =======================================================
-#  07 · EXPLORER
+#  08 · EXPLORER
 # =======================================================
-section("07", "Pièces à conviction", "Explorer les dossiers")
+section("08", "Pièces à conviction", "Explorer les dossiers")
 
 fc1, fc2 = st.columns([1, 2])
 with fc1:
