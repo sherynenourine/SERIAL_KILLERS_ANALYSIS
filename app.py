@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import streamlit.components.v1 as components
 import json
 import ssl
@@ -414,6 +416,17 @@ def decade_race(country_series, start_series, proven_series, top_n=10):
     grp["CumVictims"] = grp.groupby("Country")["Victims"].cumsum()
     return grp
 
+@st.cache_data(show_spinner=False)
+def decade_metrics(start_series, end_series, proven_series):
+    d = pd.DataFrame({"Start": start_series, "End": end_series,
+                      "Proven": proven_series}).dropna(subset=["Start"])
+    d["Decade"] = (d["Start"] // 10 * 10).astype(int)
+    d["Career"] = d["End"] - d["Start"]
+    d = d[(d["Decade"] >= 1960) & (d["Decade"] <= 2020)]
+    return (d.groupby("Decade")
+              .agg(Killers=("Start", "size"), AvgCareer=("Career", "mean"))
+              .reset_index())
+
 _WIKI_UA = "SerialKillersDataViz/1.0 (projet etudiant; contact: student@example.com)"
 
 # Contexte SSL fiable (corrige CERTIFICATE_VERIFY_FAILED sur macOS / certains environnements)
@@ -599,6 +612,60 @@ if not grp.empty:
                                        opacity=0.88))
     st.plotly_chart(style_fig(fig_race, 20), use_container_width=True)
     st.caption("▶ Appuie sur « lecture » pour voir les 10 pays les plus touchés s'accumuler décennie après décennie.")
+
+st.markdown("""
+<div class="case-card">
+<b>Pourquoi ce pic — puis ce déclin ?</b> Plutôt que de l'affirmer, regardons les données.
+</div>
+""", unsafe_allow_html=True)
+st.write("")
+
+dm = decade_metrics(df["Start year"], df["End year"], df["Proven victims"])
+cc1, cc2 = st.columns(2)
+
+with cc1:
+    fdur = px.line(dm, x="Decade", y="AvgCareer", markers=True,
+                   title="Durée d'activité moyenne par décennie")
+    fdur.update_traces(line_color="#B00020", line_width=3,
+                       marker=dict(size=8, color="#ff3b3b"))
+    fdur.update_layout(yaxis_title="années avant arrêt", xaxis_title="")
+    st.plotly_chart(style_fig(fdur, 18), use_container_width=True)
+
+with cc2:
+    mobile = pd.DataFrame({"Decade": [1960, 1970, 1980, 1990, 2000, 2010, 2020],
+                           "Mobile": [0, 0, 0, 2, 39, 91, 107]})
+    mm = dm.merge(mobile, on="Decade", how="left")
+    fov = make_subplots(specs=[[{"secondary_y": True}]])
+    fov.add_bar(x=mm["Decade"], y=mm["Killers"], name="Tueurs (dossiers)",
+                marker_color="#8B0000", opacity=0.85)
+    fov.add_scatter(x=mm["Decade"], y=mm["Mobile"], name="Téléphones / 100 hab.",
+                    mode="lines+markers", line=dict(color="#C0C0C0", width=3),
+                    secondary_y=True)
+    fov.update_layout(title="Tueurs par décennie vs adoption du mobile",
+                      legend=dict(orientation="h", y=1.12, x=0))
+    fov = style_fig(fov, 18)
+    fov.update_yaxes(title_text="tueurs", secondary_y=False)
+    fov.update_yaxes(title_text="mobiles / 100 hab.", secondary_y=True, showgrid=False)
+    st.plotly_chart(fov, use_container_width=True)
+
+st.markdown("""
+<div class="case-card">
+<b>Lecture.</b> À gauche, <b>nos 757 dossiers</b> : la durée d'activité moyenne s'effondre — d'environ
+<b>9-10 ans</b> dans les années 1970 à <b>3,6 ans</b> dans les années 2010. Les tueurs sont arrêtés de plus
+en plus tôt : c'est la <b>signature mesurable</b> des progrès de l'enquête (ADN dès la fin des années 1980,
+vidéosurveillance, téléphone). À droite, le pic des tueurs (années 1980-90) <b>précède</b> l'explosion du
+téléphone portable, qui rend les enlèvements plus risqués et raréfie les proies.
+<br><br>
+<b>Nuances.</b> Corrélation n'est pas causalité — d'autres facteurs jouent (baisse générale de la violence,
+forte hausse de l'incarcération dans les années 1980-90). Et une part du recul récent est un <b>artefact</b>
+qui prolonge notre biais de documentation : nos données ne contiennent que des affaires <b>résolues</b>
+(le Golden State Killer identifié en 2018, Gilgo Beach en 2023), donc les dernières décennies sont
+<b>sous-comptées</b>.
+<br><br>
+<span class="src">Sources : J. A. Fox (Northeastern University) ; M. Aamodt (Radford/FGCU) ;
+adoption du mobile : ITU / Banque mondiale (États-Unis).</span>
+</div>
+""", unsafe_allow_html=True)
 
 
 # =======================================================
