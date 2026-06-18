@@ -929,6 +929,6 @@ st.markdown("""
 <br><br>
 Mais nos données montrent surtout ce qui a été <b>documenté</b>, pas toute la réalité. La carte reflète les pays les mieux couverts par les sources. Le déclin récent est en partie trompeur, car les affaires non encore résolues n'y figurent pas. Et nos dossiers ne disent pas le « pourquoi » : il a fallu une autre source pour voir le poids de l'enfance maltraitée.
 <br><br>
-La leçon : on peut retracer le phénomène par les données, à condition de ne pas confondre <b>la réalité avec ce qu'on en a gardé comme trace</b>. Dossier classé.
+La leçon : on peut retracer le phénomène par les données, à condition de ne pas confondre <b>la réalité avec ce qu'on en a gardé comme trace</b>.
 </div>
 """, unsafe_allow_html=True)
