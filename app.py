@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import streamlit.components.v1 as components
 
 st.set_page_config(
     page_title="Serial Killers — Data Investigation",
@@ -414,28 +415,65 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ----- KPI -----
+# ----- KPI (compteurs animés) -----
 total_killers   = int(df["Name"].nunique())
 proven_victims  = int(df["Proven victims"].sum())
 possible_victims= int(df["Possible victims"].sum())
 peak = int(data["timeline"]["active_killers"].max()) if data["timeline"] is not None else 0
 
-kpis = [
-    ("N°01", f"{total_killers}",                              "dossiers recensés"),
-    ("N°02", f"{proven_victims:,}".replace(",", " "),         "victimes confirmées"),
-    ("N°03", f"{possible_victims:,}".replace(",", " "),       "victimes potentielles"),
-    ("N°04", f"{peak}",                                       "pic de tueurs actifs"),
+kpi_items = [
+    ("N°01", total_killers,    "dossiers recensés"),
+    ("N°02", proven_victims,   "victimes confirmées"),
+    ("N°03", possible_victims, "victimes potentielles"),
+    ("N°04", peak,             "pic de tueurs actifs"),
 ]
-cols = st.columns(4)
-for col, (idx, value, label) in zip(cols, kpis):
-    with col:
-        st.markdown(f"""
-<div class="metric-card">
-<div class="metric-idx">{idx}</div>
-<div class="metric-value">{value}</div>
-<div class="metric-label">{label}</div>
-</div>
-""", unsafe_allow_html=True)
+_cards = "".join(
+    f'<div class="kpi"><div class="kpi-idx">{idx}</div>'
+    f'<div class="kpi-value" data-target="{val}">0</div>'
+    f'<div class="kpi-label">{lbl}</div></div>'
+    for idx, val, lbl in kpi_items
+)
+
+KPI_HTML = r"""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700&family=Special+Elite&family=Inter:wght@500&display=swap');
+* { box-sizing: border-box; margin: 0; }
+body { background: transparent; font-family: 'Inter', sans-serif; overflow: hidden; }
+.kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.kpi { position: relative; overflow: hidden; padding: 22px 18px 18px;
+  background: linear-gradient(180deg,#161313,#0c0a0a);
+  border: 1px solid rgba(236,231,223,0.10); border-radius: 14px;
+  transition: transform .25s, box-shadow .25s, border-color .25s; }
+.kpi::before { content:""; position:absolute; top:0; left:18px; right:18px; height:2px;
+  background: linear-gradient(90deg,#ff3b3b,transparent); }
+.kpi::after { content:"▮▯▮▮▯▮▯▯▮▮▯▮"; position:absolute; bottom:8px; right:12px;
+  font-size:9px; letter-spacing:-1px; color:rgba(236,231,223,.16); font-family:monospace; }
+.kpi:hover { transform: translateY(-5px); border-color: rgba(255,59,59,.35);
+  box-shadow: 0 22px 44px rgba(139,0,0,.28); }
+.kpi-idx { font-family:'Special Elite',monospace; font-size:11px; color:#8a8079; letter-spacing:.15em; }
+.kpi-value { font-family:'JetBrains Mono',monospace; font-weight:700; font-size:40px;
+  color:#fff; line-height:1; margin:8px 0 6px; }
+.kpi-label { font-size:12px; color:#8a8079; text-transform:uppercase; letter-spacing:.10em; }
+@media (max-width:640px){ .kpi-row{ grid-template-columns: repeat(2,1fr); } }
+</style>
+<div class="kpi-row">__CARDS__</div>
+<script>
+(function(){
+  function fmt(n){ return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,' '); }
+  function run(el){
+    var target = +el.dataset.target, dur = 1300, t0 = performance.now();
+    function tick(now){
+      var p = Math.min((now - t0)/dur, 1), e = 1 - Math.pow(1 - p, 3);
+      el.textContent = fmt(target * e);
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+  document.querySelectorAll('.kpi-value').forEach(run);
+})();
+</script>
+"""
+components.html(KPI_HTML.replace("__CARDS__", _cards), height=160)
 
 
 # =======================================================
