@@ -487,7 +487,7 @@ st.markdown(f"""
 <div class="hero">
 {FINGERPRINT}
 <div class="stamp-rot">Confidentiel</div>
-<div class="eyebrow">⦿ Dossier N° SK-757 · Accès restreint · True Crime / NLP</div>
+<div class="eyebrow">⦿ Dossier N° SK-757 · True Crime</div>
 <h1>Serial<br>Killers<span class="thin">Une enquête par les données</span></h1>
 <p>757 dossiers criminels documentés, passés au crible : évolution historique, géographie de la peur, modes opératoires extraits par text-mining, et une dernière question — <b>pourquoi&nbsp;?</b></p>
 <div class="hero-meta">Ouvert le 17.06.2026 · 757 sujets · 10 sources croisées · NLP</div>
@@ -927,14 +927,12 @@ st.markdown('<div class="section-head"><div class="eyebrow">'
 st.markdown("""
 <div class="verdict">
 <span class="stamp">⎯ Verdict de l'enquête ⎯</span>
-Le phénomène se concentre fortement sur certaines périodes — surtout la seconde moitié du
-XX<sup>e</sup> siècle — et sur quelques pays sur-représentés dans les sources. Le text-mining
-révèle des schémas récurrents dans les méthodes et les catégories de victimes. Enfin, là où nos
-données s'arrêtent au « comment », une source externe éclaire le « pourquoi » : une enfance
-marquée par la maltraitance est nettement sur-représentée — un facteur de risque, jamais une
-fatalité.
+<b>La réponse à notre problématique est : oui, en grande partie et avec lucidité sur les limites.</b>
 <br><br>
-Ce site complète le notebook Colab et le dashboard Power BI en offrant une lecture continue,
-interactive et documentée de l'ensemble de l'analyse.
+<b>Dans le temps</b>, le phénomène n'est pas diffus : il culmine dans la seconde moitié du XX<sup>e</sup> siècle, et nos données <i>expliquent</i> ce pic, l'effondrement de la durée d'activité (≈ 9-10 ans à 3,6 ans) montre des tueurs neutralisés de plus en plus vite. <b>Dans l'espace</b>, on cartographie nettement la concentration des dossiers à condition de lire cette carte comme une géographie de la <i>documentation</i>, pas de la criminalité réelle. <b>Dans les méthodes</b>, le text-mining fait émerger des schémas récurrents de modes opératoires et de victimes ciblées.
+<br><br>
+Quant au <b>« pourquoi »</b>, nos données seules ne suffisent pas : il a fallu les croiser avec une source externe, qui révèle une enfance marquée par la maltraitance nettement sur-représentée, un facteur de risque, jamais une fatalité.
+<br><br>
+Retracer le phénomène par les données est donc possible ; mais la leçon centrale de l'enquête est que <b>ces données décrivent ce qui a été documenté et résolu</b> et c'est en mesurant ce biais, plus qu'en l'ignorant, qu'on en tire une lecture honnête. Dossier classé.
 </div>
 """, unsafe_allow_html=True)
