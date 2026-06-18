@@ -636,16 +636,20 @@ with cc2:
                            "Mobile": [0, 0, 0, 2, 39, 91, 107]})
     mm = dm.merge(mobile, on="Decade", how="left")
     fov = make_subplots(specs=[[{"secondary_y": True}]])
-    fov.add_bar(x=mm["Decade"], y=mm["Killers"], name="Tueurs (dossiers)",
-                marker_color="#8B0000", opacity=0.85)
-    fov.add_scatter(x=mm["Decade"], y=mm["Mobile"], name="Téléphones / 100 hab.",
+    fov.add_bar(x=mm["Decade"], y=mm["Killers"], name="Tueurs (échelle gauche)",
+                marker_color="#8B0000", opacity=0.9)
+    fov.add_scatter(x=mm["Decade"], y=mm["Mobile"], name="Mobiles /100 hab. (échelle droite)",
                     mode="lines+markers", line=dict(color="#C0C0C0", width=3),
-                    secondary_y=True)
-    fov.update_layout(title="Tueurs par décennie vs adoption du mobile",
-                      legend=dict(orientation="h", y=1.12, x=0))
+                    marker=dict(size=7), secondary_y=True)
     fov = style_fig(fov, 18)
-    fov.update_yaxes(title_text="tueurs", secondary_y=False)
-    fov.update_yaxes(title_text="mobiles / 100 hab.", secondary_y=True, showgrid=False)
+    fov.update_layout(
+        title="Tueurs par décennie vs adoption du mobile",
+        legend=dict(orientation="h", yanchor="top", y=-0.16, x=0.5, xanchor="center"),
+        margin=dict(t=52, b=60, l=8, r=8))
+    fov.update_yaxes(title_text="tueurs", secondary_y=False,
+                     title_font_color="#d9534f", tickfont_color="#d9534f")
+    fov.update_yaxes(title_text="mobiles / 100 hab.", secondary_y=True, showgrid=False,
+                     title_font_color="#C0C0C0", tickfont_color="#C0C0C0")
     st.plotly_chart(fov, use_container_width=True)
 
 st.markdown("""
