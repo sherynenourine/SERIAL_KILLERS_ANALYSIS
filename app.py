@@ -929,6 +929,47 @@ st.markdown("""
 <br><br>
 Mais nos données montrent surtout ce qui a été <b>documenté</b>, pas toute la réalité. La carte reflète les pays les mieux couverts par les sources. Le déclin récent est en partie trompeur, car les affaires non encore résolues n'y figurent pas. Et nos dossiers ne disent pas le « pourquoi » : il a fallu une autre source pour voir le poids de l'enfance maltraitée.
 <br><br>
-La leçon : on peut retracer le phénomène par les données, à condition de ne pas confondre <b>la réalité avec ce qu'on en a gardé comme trace</b>.
+La leçon : on peut retracer le phénomène par les données, à condition de ne pas confondre <b>la réalité avec ce qu'on en a gardé comme trace</b>. Dossier classé.
+</div>
+""", unsafe_allow_html=True)
+
+
+# =======================================================
+#  OUVERTURE
+# =======================================================
+st.markdown('<div class="section-head"><div class="eyebrow">'
+            '<span class="snum">→</span>Ouverture</div>'
+            '<h2>Une affaire en ouvre une autre</h2></div>',
+            unsafe_allow_html=True)
+
+ms = pd.DataFrame({"Decade": [1980, 1990, 2000, 2010],
+                   "MassShootings": [2.6, 3.5, 4.1, 5.7]})
+relay = dm[dm["Decade"].isin([1980, 1990, 2000, 2010])][["Decade", "Killers"]].merge(ms, on="Decade")
+
+fig_o = make_subplots(specs=[[{"secondary_y": True}]])
+fig_o.add_bar(x=relay["Decade"], y=relay["Killers"],
+              name="Tueurs en série (échelle gauche)", marker_color="#8B0000", opacity=0.9)
+fig_o.add_scatter(x=relay["Decade"], y=relay["MassShootings"],
+                  name="Tueries de masse / an, É.-U. (échelle droite)",
+                  mode="lines+markers", line=dict(color="#ff8c42", width=3),
+                  marker=dict(size=9), secondary_y=True)
+fig_o = style_fig(fig_o, 20)
+fig_o.update_layout(
+    title="Passage de relais ? Déclin des tueurs en série vs montée des tueries de masse",
+    legend=dict(orientation="h", yanchor="top", y=-0.16, x=0.5, xanchor="center"),
+    margin=dict(t=52, b=60, l=8, r=8))
+fig_o.update_yaxes(title_text="tueurs en série (par décennie)", secondary_y=False,
+                   title_font_color="#d9534f", tickfont_color="#d9534f")
+fig_o.update_yaxes(title_text="tueries de masse / an (É.-U.)", secondary_y=True, showgrid=False,
+                   title_font_color="#ff8c42", tickfont_color="#ff8c42")
+st.plotly_chart(fig_o, use_container_width=True)
+
+st.markdown("""
+<div class="case-card" style="border-left:4px solid #ff8c42;">
+<b>Et après ?</b> Notre enquête se referme sur un déclin — mais ce déclin coïncide avec la <b>montée d'une autre violence</b>. Là où les tueurs en série s'effacent après les années 1990, les <b>tueries de masse</b> progressent : aux États-Unis, leur fréquence passe d'environ <b>2,6 par an</b> (années 1980) à <b>5,7</b> (années 2010). Comme si une forme de violence en relayait une autre — l'acte caché et répété cédant la place à l'acte unique, public et spectaculaire.
+<br><br>
+<b>Prudence.</b> Les deux ne se mesurent pas sur la même échelle (tueurs recensés dans le monde vs tueries de masse annuelles aux États-Unis), et cette coïncidence dans le temps n'est <b>pas une preuve de causalité</b> : c'est une <b>hypothèse</b> discutée par les criminologues, et une piste pour une prochaine enquête.
+<br><br>
+<span class="src">Source : J. A. Fox, <i>Trends in U.S. Mass Shootings: Facts, Fears and Fatalities</i> (2024).</span>
 </div>
 """, unsafe_allow_html=True)
